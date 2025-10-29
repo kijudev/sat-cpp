@@ -1,5 +1,6 @@
 #include <concepts>
 #include <cstdint>
+#include <iostream>
 #include <limits>
 #include <memory>
 #include <utility>
@@ -20,6 +21,10 @@ enum class Op {
 
 using Symbol = uint8_t;
 using Values = std::vector<bool>;
+class Expr;
+
+template <typename X>
+concept IsExprPart = (std::same_as<X, Symbol> || std::same_as<X, Expr>);
 
 class Expr {
 private:
@@ -47,7 +52,11 @@ private:
         const std::variant<Symbol, std::unique_ptr<Expr>>& symbol) {
 
         if (symbol.index() == 0) {
-            return values[std::get<Symbol>(symbol)];
+            auto v = values[std::get<Symbol>(symbol)];
+
+            std::cout << "Eval part: " << v << "\n";
+
+            return v;
         } else {
             return std::get<std::unique_ptr<Expr>>(symbol).get()->eval(values);
         }
@@ -113,14 +122,56 @@ public:
     }
 
     bool eval(const Values& values) {
+
         return eval_op(m_op, eval_part(values, m_p), eval_part(values, m_q));
     }
 
-    // template <typename P, typename Q>
-    //     requires(std::same_as<P, Symbol> || std::same_as<P, Expr &&>)
-    //             && (std::same_as<Q, Symbol> || std::same_as<Q, Expr &&>)
-    // static Expr Impl() {
-    // }
-};
+    template <typename P, typename Q>
+        requires(IsExprPart<P> && IsExprPart<Q>)
+    static Expr Impl(P p, Q q) {
+        return Expr(Op::Impl, p, q);
+    }
 
+    template <typename P, typename Q>
+        requires(IsExprPart<P> && IsExprPart<Q>)
+    static Expr And(P p, Q q) {
+        return Expr(Op::And, p, q);
+    }
+
+    template <typename P, typename Q>
+        requires(IsExprPart<P> && IsExprPart<Q>)
+    static Expr Eq(P p, Q q) {
+        return Expr(Op::Eq, p, q);
+    }
+
+    template <typename P, typename Q>
+        requires(IsExprPart<P> && IsExprPart<Q>)
+    static Expr Nand(P p, Q q) {
+        return Expr(Op::Nand, p, q);
+    }
+
+    template <typename P, typename Q>
+        requires(IsExprPart<P> && IsExprPart<Q>)
+    static Expr Nor(P p, Q q) {
+        return Expr(Op::Nor, p, q);
+    }
+
+    template <typename P, typename Q>
+        requires(IsExprPart<P> && IsExprPart<Q>)
+    static Expr Or(P p, Q q) {
+        return Expr(Op::Or, p, q);
+    }
+
+    template <typename P, typename Q>
+        requires(IsExprPart<P> && IsExprPart<Q>)
+    static Expr Xor(P p, Q q) {
+        return Expr(Op::Xor, p, q);
+    }
+
+    template <typename P>
+        requires(IsExprPart<P>)
+    static Expr Nor(P p) {
+        return Expr(Op::Not, p, std::numeric_limits<Symbol>::max());
+    }
+};
 };

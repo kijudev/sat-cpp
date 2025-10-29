@@ -2,11 +2,15 @@
 #include <iostream>
 
 int main() {
-    sat::Expr   a(sat::Op::Or, 0, 1);
-    sat::Expr   x(sat::Op::Or, 0, a);
-    sat::Values values {true, false};
+    sat::Symbol p = 0;
+    sat::Symbol q = 1;
+    sat::Symbol r = 2;
+    sat::Values values {true, false, true};
 
-    std::cout << "x: " << x.eval(values) << "\n";
+    sat::Expr x = sat::Expr::And(p, q);
+    sat::Expr y = sat::Expr(sat::Op::And, p, sat::Expr(sat::Op::And, q, r));
+
+    std::cout << "y: " << y.eval(values) << "\n";
 
     return 0;
 }
