@@ -27,30 +27,37 @@ template <typename X>
 concept IsExprPart = (std::same_as<X, Symbol> || std::same_as<X, Expr>);
 
 class Expr {
-private:
+   private:
     std::variant<Symbol, std::unique_ptr<Expr>> m_p;
     std::variant<Symbol, std::unique_ptr<Expr>> m_q;
-    Op                                          m_op;
+    Op m_op;
 
     // TODO
     // Make it lazy
     static bool eval_op(Op op, bool p, bool q) {
         switch (op) {
-        case Op::Impl: return (!p) && q;
-        case Op::Eq: return p == q;
-        case Op::Not: return !p;
-        case Op::And: return p && q;
-        case Op::Or: return p || q;
-        case Op::Nand: return (!p) || (!q);
-        case Op::Xor: return ((!p) && q) || (p && (!q));
-        case Op::Nor: return (!p) && (!q);
+            case Op::Impl:
+                return (!p) && q;
+            case Op::Eq:
+                return p == q;
+            case Op::Not:
+                return !p;
+            case Op::And:
+                return p && q;
+            case Op::Or:
+                return p || q;
+            case Op::Nand:
+                return (!p) || (!q);
+            case Op::Xor:
+                return ((!p) && q) || (p && (!q));
+            case Op::Nor:
+                return (!p) && (!q);
         }
     }
 
     static bool eval_part(
-        const Values&                                      values,
+        const Values& values,
         const std::variant<Symbol, std::unique_ptr<Expr>>& symbol) {
-
         if (symbol.index() == 0) {
             auto v = values[std::get<Symbol>(symbol)];
 
@@ -62,42 +69,33 @@ private:
         }
     }
 
-public:
+   public:
     Expr() = delete;
 
-    Expr(Op op, Symbol p, Symbol q)
-        : m_p(p)
-        , m_q(q)
-        , m_op(op) { }
+    Expr(Op op, Symbol p, Symbol q) : m_p(p), m_q(q), m_op(op) {}
 
     Expr(Op op, Expr p, Symbol q)
-        : m_p(std::make_unique<Expr>(std::move(p)))
-        , m_q(q)
-        , m_op(op) { }
+        : m_p(std::make_unique<Expr>(std::move(p))), m_q(q), m_op(op) {}
 
     Expr(Op op, Symbol p, Expr q)
-        : m_p(p)
-        , m_q(std::make_unique<Expr>(std::move(q)))
-        , m_op(op) { }
+        : m_p(p), m_q(std::make_unique<Expr>(std::move(q))), m_op(op) {}
 
     Expr(Op op, Expr p, Expr q)
-        : m_p(std::make_unique<Expr>(std::move(p)))
-        , m_q(std::make_unique<Expr>(std::move(q)))
-        , m_op(op) { }
+        : m_p(std::make_unique<Expr>(std::move(p))),
+          m_q(std::make_unique<Expr>(std::move(q))),
+          m_op(op) {}
 
     // TODO
     // Throw if op is not `Not`
     Expr(Op op, Symbol p)
-        : m_p(p)
-        , m_q(std::numeric_limits<Symbol>::max())
-        , m_op(op) { }
+        : m_p(p), m_q(std::numeric_limits<Symbol>::max()), m_op(op) {}
 
     // TODO
     // Throw if op is not `Not`
     Expr(Op op, Expr p)
-        : m_p(std::make_unique<Expr>(std::move(p)))
-        , m_q(std::numeric_limits<Symbol>::max())
-        , m_op(op) { }
+        : m_p(std::make_unique<Expr>(std::move(p))),
+          m_q(std::numeric_limits<Symbol>::max()),
+          m_op(op) {}
 
     Expr(const Expr& other) {
         if (other.m_p.index() == 1) {
@@ -122,7 +120,6 @@ public:
     }
 
     bool eval(const Values& values) {
-
         return eval_op(m_op, eval_part(values, m_p), eval_part(values, m_q));
     }
 
@@ -174,4 +171,4 @@ public:
         return Expr(Op::Not, p, std::numeric_limits<Symbol>::max());
     }
 };
-};
+};  // namespace sat
